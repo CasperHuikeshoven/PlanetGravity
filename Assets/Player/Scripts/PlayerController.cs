@@ -43,6 +43,9 @@ public class PlayerController : MonoBehaviour
     public Transform planetTransform;
     public Transform globalPlayerTransform;
     public float rotateSpeed = 5f;
+
+    [Header("Slope Detection")]
+    public float maxSlopeAngle = 45f;
     
     void Start()
     {
@@ -53,6 +56,7 @@ public class PlayerController : MonoBehaviour
     {
         Movement();
         MouseLook();
+        SlopeCheck();
     }
 
     private void Movement(){
@@ -85,7 +89,6 @@ public class PlayerController : MonoBehaviour
         yVelocity += gravityStrength * Time.deltaTime;
         if(planetGravity) RotateForPlanetGravity();
         if(isGrounded && yVelocity < 0) yVelocity = 0f;
-
         transform.position += transform.up*yVelocity*Time.deltaTime;
 
     }
@@ -101,7 +104,22 @@ public class PlayerController : MonoBehaviour
     private void Jump(){
         if(isGrounded){
             yVelocity = Mathf.Sqrt(jumpHeight * 2f * -gravityStrength);
-            Debug.Log("Jump");
+        }
+    }
+
+    private void SlopeCheck()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(groundCheck.position, Vector3.down, out hit, groundDistance, groundMask))
+        {
+            Vector3 groundNormal = hit.normal;
+            float slopeAngle = Vector3.Angle(groundNormal, transform.up);
+            if (slopeAngle < maxSlopeAngle && slopeAngle > 1f)
+            {
+                Vector3 slopePosition = hit.point + Vector3.up*2.4f; 
+
+                transform.position = Vector3.Lerp(transform.position, slopePosition, Time.deltaTime * movementSpeed);
+            }
         }
     }
 }
